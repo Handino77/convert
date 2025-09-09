@@ -1,0 +1,2 @@
+- name: HTML to PDF Converter
+  uses: narthanaj/html-to-pdf-action@v1.0.0
