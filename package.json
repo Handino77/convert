@@ -5,9 +5,9 @@
     "main": "src/index.js",
     "type": "commonjs",
     "scripts": {
-      "test": "node src/index.js --source=examples/test.html --output=output/test.pdf",
-      "start": "node src/index.js"
-    },
+  "test": "node src/index.js --source=examples/test.html --output=output/test.pdf",
+  "start": "node src/server.js"
+},
     "bin": {
       "html-to-pdf": "src/index.js"
     },
