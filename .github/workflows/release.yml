@@ -1,0 +1,22 @@
+name: Release to GitHub Marketplace
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      # This is just a placeholder - GitHub automatically publishes released actions to the Marketplace
+      # based on the metadata in action.yml when the repository has the right visibility settings
+      - name: Verify action.yml
+        run: |
+          if [ ! -f "action.yml" ]; then
+            echo "action.yml is missing"
+            exit 1
+          fi
+          echo "Action verified for publishing to GitHub Marketplace"
