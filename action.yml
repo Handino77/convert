@@ -1,0 +1,61 @@
+name: 'HTML to PDF Converter'
+description: 'Convert HTML files or URLs to PDF documents with full support for modern HTML, CSS, fonts, and emojis'
+author: 'narthanaj'
+branding:
+  icon: 'file-text'
+  color: 'blue'
+inputs:
+  source:
+    description: 'HTML source - can be a file path, URL, or HTML content'
+    required: true
+  output:
+    description: 'Output PDF file path'
+    required: true
+  wait_for:
+    description: 'Optional selector to wait for before rendering (for SPAs)'
+    required: false
+  format:
+    description: 'Paper format (A4, Letter, etc.)'
+    required: false
+    default: 'A4'
+  margin:
+    description: 'PDF margins in format: top,right,bottom,left (in mm)'
+    required: false
+    default: '10,10,10,10'
+  orientation:
+    description: 'Paper orientation (portrait or landscape)'
+    required: false
+    default: 'portrait'
+  header_template:
+    description: 'HTML template for the PDF header'
+    required: false
+  footer_template:
+    description: 'HTML template for the PDF footer'
+    required: false
+  timeout:
+    description: 'Timeout in milliseconds'
+    required: false
+    default: '30000'
+  scale:
+    description: 'Scale of the webpage rendering (1 = 100%)'
+    required: false
+    default: '1'
+  custom_css:
+    description: 'Custom CSS to inject into the page'
+    required: false
+  cookies:
+    description: 'JSON string of cookies to set (useful for authenticated pages)'
+    required: false
+  user_agent:
+    description: 'User agent string'
+    required: false
+  print_background:
+    description: 'Print background graphics'
+    required: false
+    default: 'true'
+runs:
+  using: 'docker'
+  image: 'docker://narthanaj/html-to-pdf-action:latest'
+outputs:
+  pdf_path:
+    description: 'Path to the generated PDF file'
