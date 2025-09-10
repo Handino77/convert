@@ -1,0 +1,206 @@
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-direct:
+    name: Test Direct Node.js Execution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          
+      # Install dependencies
+      - name: Install dependencies
+        run: npm ci
+      
+      # Install Chrome directly
+      - name: Install Chrome
+        run: |
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+          echo "PUPPETEER_EXECUTABLE_PATH=$(which google-chrome-stable)" >> $GITHUB_ENV
+          google-chrome-stable --version
+      
+      # Install browser dependencies (dynamically choose the right packages based on OS)
+      - name: Install browser dependencies
+        run: |
+          sudo apt-get update
+          
+          # Check if we're on Ubuntu 24.04 (Noble)
+          if grep -q "noble" /etc/os-release; then
+            echo "Detected Ubuntu 24.04 (Noble)"
+            LIBASOUND_PKG="libasound2t64"
+          else
+            echo "Using standard libasound2 package"
+            LIBASOUND_PKG="libasound2"
+          fi
+          
+          sudo apt-get install -y \
+            ca-certificates \
+            fonts-liberation \
+            $LIBASOUND_PKG \
+            libatk-bridge2.0-0 \
+            libatk1.0-0 \
+            libcairo2 \
+            libcups2 \
+            libdbus-1-3 \
+            libexpat1 \
+            libfontconfig1 \
+            libgbm1 \
+            libglib2.0-0 \
+            libgtk-3-0 \
+            libnspr4 \
+            libnss3 \
+            libpango-1.0-0 \
+            libpangocairo-1.0-0 \
+            libx11-6 \
+            libx11-xcb1 \
+            libxcb1 \
+            libxcomposite1 \
+            libxcursor1 \
+            libxdamage1 \
+            libxext6 \
+            libxfixes3 \
+            libxi6 \
+            libxrandr2 \
+            libxrender1 \
+            libxss1 \
+            libxtst6 \
+            wget
+      
+      # Create test HTML file
+      - name: Create test HTML
+        run: |
+          mkdir -p examples
+          cat > examples/test.html << EOF
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Test Page</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 50px; }
+              h1 { color: #2c3e50; }
+              .emoji { font-size: 24px; }
+            </style>
+          </head>
+          <body>
+            <h1>HTML to PDF Test</h1>
+            <p>This is a test page for the HTML to PDF converter.</p>
+            <p class="emoji">Emojis support: 😀 🚀 🌈 👍</p>
+          </body>
+          </html>
+          EOF
+      
+      # Test the action with the test file
+      - name: Test HTML to PDF conversion (file)
+        run: |
+          mkdir -p output
+          node src/index.js
+        env:
+          INPUT_SOURCE: examples/test.html
+          INPUT_OUTPUT: output/test_file.pdf
+          INPUT_FORMAT: A4
+          INPUT_MARGIN: 10,10,10,10
+          INPUT_ORIENTATION: portrait
+          INPUT_PRINT_BACKGROUND: true
+      
+      # Test with URL
+      - name: Test HTML to PDF conversion (URL)
+        run: |
+          node src/index.js
+        env:
+          INPUT_SOURCE: https://github.com
+          INPUT_OUTPUT: output/test_url.pdf
+          INPUT_FORMAT: A4
+          INPUT_MARGIN: 10,10,10,10
+          INPUT_ORIENTATION: landscape
+          
+      # Check if PDFs were created
+      - name: Verify output
+        run: |
+          if [ ! -f "output/test_file.pdf" ]; then
+            echo "File test failed"
+            exit 1
+          fi
+          
+          if [ ! -f "output/test_url.pdf" ]; then
+            echo "URL test failed"
+            exit 1
+          fi
+          
+          echo "Tests passed successfully!"
+  
+  test-docker:
+    name: Test Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Create test HTML file
+      - name: Create test HTML
+        run: |
+          mkdir -p examples output
+          cat > examples/test.html << EOF
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Test Page</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 50px; }
+              h1 { color: #2c3e50; }
+              .emoji { font-size: 24px; }
+            </style>
+          </head>
+          <body>
+            <h1>HTML to PDF Test</h1>
+            <p>This is a test page for the HTML to PDF converter.</p>
+            <p class="emoji">Emojis support: 😀 🚀 🌈 👍</p>
+          </body>
+          </html>
+          EOF
+      
+      # Build the Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t html-to-pdf-action:test .
+      
+      # Test using Docker image
+      - name: Test with Docker image (file)
+        run: |
+          docker run --rm -v $(pwd):/workspace html-to-pdf-action:test \
+            --source=/workspace/examples/test.html \
+            --output=/workspace/output/docker_test_file.pdf
+      
+      # Test using Docker image with URL
+      - name: Test with Docker image (URL)
+        run: |
+          docker run --rm -v $(pwd):/workspace html-to-pdf-action:test \
+            --source=https://github.com \
+            --output=/workspace/output/docker_test_url.pdf
+            
+      # Check if PDFs were created
+      - name: Verify Docker output
+        run: |
+          if [ ! -f "output/docker_test_file.pdf" ]; then
+            echo "Docker file test failed"
+            exit 1
+          fi
+          
+          if [ ! -f "output/docker_test_url.pdf" ]; then
+            echo "Docker URL test failed"
+            exit 1
+          fi
+          
+          echo "Docker tests passed successfully!"
