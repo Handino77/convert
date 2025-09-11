@@ -161,26 +161,32 @@ async function performConversion(source, options) {
     return pdfBuffer;
 }
 
-// API Endpoint to handle conversion requests
 app.post('/convert', async (req, res) => {
     const { source, ...options } = req.body;
 
     if (!source) {
         return res.status(400).json({ error: "Input 'source' is required" });
     }
-    
+
     log(`Received request to convert source to PDF`);
 
     try {
         const pdfBuffer = await performConversion(source, options);
+
+        // Enviar PDF correctamente como binario
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=output.pdf`);
-        res.send(pdfBuffer);
+        res.setHeader('Content-Disposition', `attachment; filename="output.pdf"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+
+        res.end(pdfBuffer, 'binary'); // 🔹 importante: usar 'binary'
     } catch (error) {
+        log(`Conversion failed: ${error.message}`, 'error');
         res.status(500).json({ error: 'Conversion failed. Check the server logs for details.', details: error.message });
     }
 });
 
 app.listen(PORT, () => {
-    log(`Server listening on port ${PORT}`);
+    console.log(`Server listening on port ${PORT}`);
 });
+
+
