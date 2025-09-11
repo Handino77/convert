@@ -77,7 +77,14 @@ async function convertWithPuppeteer(source, options) {
         const executablePath = await findChromeExecutable();
         const launchOptions = {
             headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+            args: ['--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu']
         };
         if (executablePath) {
             launchOptions.executablePath = executablePath;
