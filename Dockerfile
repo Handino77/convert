@@ -61,3 +61,5 @@ RUN mkdir -p /tmp/html-to-pdf
 
 # Set the entrypoint
 ENTRYPOINT ["node", "/app/src/index.js"]
+
+CMD ["npm", "start"]
